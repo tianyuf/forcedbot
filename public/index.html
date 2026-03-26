@@ -6,8 +6,6 @@
   <title>I Forced A Bot</title>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg: #ffffff;
@@ -18,7 +16,7 @@
       --accent: #000000;
     }
     body {
-      font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+      font-family: 'Helvetica', 'Arial', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -139,9 +137,9 @@
     /* Script Body - Industry Standard Formatting */
     .result-body {
       padding: 2.5rem 3rem;
-      font-size: 1rem;
+      font-size: 1.3rem;
       line-height: 1.6;
-      font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+      font-family: 'Courier New', Courier, monospace;
       background: var(--paper);
       min-height: 400px;
     }
@@ -187,6 +185,8 @@
     .result-footer {
       margin-top: 2rem;
       padding-top: 1.5rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
       border-top: 1px solid var(--border);
       text-align: center;
       font-size: 0.75rem;
@@ -246,7 +246,7 @@
   <div class="container">
     <div class="header">
       <h1>I Forced A Bot</h1>
-      <p class="tagline">1000 hours of X → bot writes a script</p>
+      <p class="tagline">to watch 1,000 hours of X and write a script</p>
     </div>
 
     <div class="input-section">
@@ -254,7 +254,7 @@
         <label>1000 hours of</label>
         <input type="text" id="content" placeholder="Olive Garden commercials, 90s sitcoms...">
       </div>
-      <button id="generateBtn">Generate Script</button>
+      <button id="generateBtn">Start watching</button>
     </div>
 
     <div class="error" id="error"></div>
@@ -265,7 +265,7 @@
       </div>
       <div class="result-body" id="playScript"></div>
       <div class="result-footer" id="resultFooter">
-        Made by Tianyu Fang and inspired by Keaton Patti
+        Inspired by Keaton Patti. 
       </div>
       <div class="result-actions">
         <button id="copyBtn">Copy Text</button>
@@ -275,7 +275,7 @@
     </div>
 
     <div class="page-footer">
-      <p>A homage to <a href="https://twitter.com/keatonpatti" target="_blank">Keaton Patti</a>'s "I forced a bot" meme format</p>
+      <p>inspired by <a href="https://twitter.com/keatonpatti" target="_blank">keaton patti</a> · built by <a href="https://www.tianyufang.net/" target="_blank">tianyu fang</a></p>
     </div>
   </div>
 
@@ -304,7 +304,7 @@
 
       hideError();
       generateBtn.disabled = true;
-      generateBtn.textContent = 'Generating...';
+      generateBtn.textContent = 'Watching...';
 
       try {
         const response = await fetch('/api/generate', {
