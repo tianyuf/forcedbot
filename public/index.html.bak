@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>I Forced A Bot</title>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --bg: #ffffff; --text: #111111; --text-light: #666666; --border: #dddddd; }
+    body { font-family: 'Courier New', Courier, monospace; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .hidden { display: none; }
+    .tabs { display: flex; gap: 0; margin-bottom: 1rem; }
+    .tabs .tab { flex: 1; padding: 0.75rem; background: #f5f5f5; color: #666; border: 1px solid #ddd; border-bottom: none; cursor: pointer; }
+    .tabs .tab.active { background: #fff; color: #111; border-bottom: 1px solid #fff; margin-bottom: -1px; }
+    .tab-content { margin-bottom: 1rem; }
+    .youtube-inputs { display: flex; flex-direction: column; gap: 0.5rem; }
+    .yt-url { padding: 0.75rem; border: 1px solid #ddd; font-size: 0.875rem; }
+    h1 { font-size: 1.5rem; text-align: center; margin-bottom: 0.5rem; font-weight: normal; }
+    .tagline { text-align: center; color: var(--text-light); font-size: 0.875rem; margin-bottom: 2rem; }
+    .input-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .input-row label { background: #f5f5f5; padding: 0.875rem 1rem; border: 1px solid var(--border); border-right: none; font-size: 0.875rem; white-space: nowrap; }
+    input[type="text"] { flex: 1; padding: 0.875rem 1rem; border: 1px solid var(--border); font-family: inherit; font-size: 0.875rem; }
+    input[type="text"]:focus { outline: none; border-color: #333; }
+    button { width: 100%; padding: 1rem; background: #111; color: #fff; border: none; font-family: inherit; font-size: 0.875rem; cursor: pointer; }
+    button:hover { background: #333; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    .error { margin-top: 1rem; padding: 0.75rem; background: #fff0f0; border: 1px solid #ffcccc; color: #cc0000; font-size: 0.75rem; display: none; }
+    .error.visible { display: block; }
+    .result { margin-top: 2rem; display: none; border: 2px solid #111; }
+    .result.visible { display: block; }
+    .result-header { padding: 1rem; border-bottom: 1px solid var(--border); background: #fafafa; }
+    .result-header p { font-size: 0.875rem; line-height: 1.5; }
+    .result-body { padding: 1.5rem; font-size: 1.25rem; line-height: 1.4; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; }
+    .result-body .scene-heading { font-weight: bold; text-transform: uppercase; margin: 1.5rem 0 0.5rem 0; }
+    .result-body .character { text-align: center !important; margin: 1rem 25% 0 25%; font-weight: bold !important; text-transform: uppercase; display: block; }
+    .result-body .parenthetical { text-align: center; margin: 0 30% 0 30%; font-style: italic; }
+    .result-body .dialogue { margin: 0.25rem 20% 0.5rem 20%; }
+    .result-body .action { margin: 0.5rem 0; }
+    .result-actions { display: flex; border-top: 1px solid var(--border); }
+    .result-actions button { width: auto; flex: 1; background: #fff; color: #111; border: none; border-right: 1px solid var(--border); padding: 0.75rem; font-size: 0.75rem; }
+    .result-actions button:last-child { border-right: none; }
+    .result-actions button:hover { background: #f5f5f5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>I Forced A Bot</h1>
+    <p class="tagline">1000 hours of X → bot writes a script</p>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="text">Text</button>
+      <button class="tab" data-tab="youtube">YouTube</button>
+    </div>
+
+    <div class="tab-content" id="text-mode">
+      <div class="input-row">
+        <label>1000 hours of</label>
+        <input type="text" id="content" placeholder="Olive Garden commercials, 90s sitcoms...">
+      </div>
+    </div>
+
+    <div class="tab-content hidden" id="youtube-mode">
+      <div class="youtube-inputs">
+        <input type="text" class="yt-url" placeholder="YouTube URL 1">
+        <input type="text" class="yt-url" placeholder="YouTube URL 2">
+        <input type="text" class="yt-url" placeholder="YouTube URL 3">
+      </div>
+    </div>
+
+    <button id="generateBtn">Generate</button>
+
+    <div class="error" id="error"></div>
+
+    <div class="result" id="result">
+      <div class="result-header">
+        <p id="memeIntroText"></p>
+      </div>
+      <div class="result-body" id="playScript"></div>
+      <div class="result-actions">
+        <button id="copyBtn">Copy</button>
+        <button id="downloadBtn">Save Image</button>
+        <button id="newBtn">New</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const generateBtn = document.getElementById('generateBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const newBtn = document.getElementById('newBtn');
+    const contentInput = document.getElementById('content');
+    const resultDiv = document.getElementById('result');
+    const memeIntroText = document.getElementById('memeIntroText');
+    const playScript = document.getElementById('playScript');
+    const errorDiv = document.getElementById('error');
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
+    let currentMode = 'text';
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const mode = tab.dataset.tab;
+        currentMode = mode;
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        tabContents.forEach(c => c.classList.add('hidden'));
+        document.getElementById(mode + '-mode').classList.remove('hidden');
+      });
+    });
+
+    generateBtn.addEventListener('click', generatePlay);
+    copyBtn.addEventListener('click', copyToClipboard);
+    downloadBtn.addEventListener('click', downloadJPEG);
+    newBtn.addEventListener('click', resetForm);
+
+    async function generatePlay() {
+      let content;
+
+      if (currentMode === 'youtube') {
+        const ytInputs = document.querySelectorAll('.yt-url');
+        const urls = Array.from(ytInputs).map(i => i.value.trim()).filter(i => i);
+
+        if (urls.length === 0) {
+          showError('Enter at least one YouTube URL');
+          return;
+        }
+
+        generateBtn.disabled = true;
+        generateBtn.textContent = 'Fetching transcripts...';
+
+        try {
+          const resp = await fetch('/api/youtube/transcript', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls })
+          });
+          const data = await resp.json();
+
+          if (data.error) throw new Error(data.error.message);
+
+          const validTranscripts = data.transcripts.filter(t => t.text && !t.error);
+          if (validTranscripts.length === 0) {
+            throw new Error('No transcripts available for these videos');
+          }
+
+          content = validTranscripts.map(t => t.text).join(' ');
+        } catch (err) {
+          showError(err.message);
+          generateBtn.disabled = false;
+          generateBtn.textContent = 'Generate';
+          return;
+        }
+      } else {
+        content = contentInput.value.trim();
+        if (!content) {
+          showError('Enter what the bot watched');
+          return;
+        }
+      }
+
+      hideError();
+      generateBtn.disabled = true;
+      generateBtn.textContent = 'Generating...';
+
+      const prompt = `Write a screenplay in the Keaton Patti "I forced a bot" meme format.
+
+The bot has watched 1,000 hours of ${content} and writes a script with:
+- Simple misunderstandings of ${content}
+- Wrong words and weird combinations
+- ALL CAPS character names
+- Short lines
+
+150-250 words. 2-3 scenes.
+
+IMPORTANT: Use straight quotes only. No curly quotes in the output.
+
+Output JSON:
+{
+  "intro": "I forced a bot to watch 1,000 hours of ${content} and asked it to write a script. Here is the first page.",
+  "scenes": [
+    {
+      "heading": "INT. LOCATION - TIME",
+      "lines": [
+        {"type": "action", "text": "Description"},
+        {"type": "character", "text": "NAME"},
+        {"type": "dialogue", "text": "Line"}
+      ]
+    }
+  ]
+}`;
+
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content: prompt }]
+          })
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error?.message || 'API request failed');
+        }
+
+        const data = await response.json();
+        const result = data.choices?.[0]?.message?.content?.trim();
+
+        if (!result) {
+          throw new Error('No response from AI');
+        }
+
+        let json;
+        try {
+          const startIdx = result.indexOf('{');
+          const endIdx = result.lastIndexOf('}');
+          if (startIdx === -1 || endIdx === -1) throw new Error('No JSON found');
+          const jsonStr = result.substring(startIdx, endIdx + 1);
+          json = JSON.parse(jsonStr);
+        } catch (e) {
+          const lines = result.split('\n').filter(l => l.trim());
+          memeIntroText.textContent = lines[0] || '';
+          playScript.innerHTML = `<div class="action">${lines.slice(1).join('\n')}</div>`;
+          resultDiv.classList.add('visible');
+          generateBtn.disabled = false;
+          generateBtn.textContent = 'Generate';
+          return;
+        }
+
+        memeIntroText.textContent = json.intro || '';
+        playScript.innerHTML = renderFromJson(json.scenes || []);
+        resultDiv.classList.add('visible');
+
+      } catch (err) {
+        showError(err.message || 'Something went wrong');
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Generate';
+      }
+    }
+
+    function copyToClipboard() {
+      const text = `${memeIntroText.textContent}\n\n${playScript.textContent}`;
+      navigator.clipboard.writeText(text).then(() => {
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+      });
+    }
+
+    async function downloadJPEG() {
+      downloadBtn.disabled = true;
+      downloadBtn.textContent = 'Saving...';
+      try {
+        const canvas = await html2canvas(resultDiv, { backgroundColor: '#ffffff', scale: 2 });
+        const link = document.createElement('a');
+        link.download = 'bot-meme.jpg';
+        link.href = canvas.toDataURL('image/jpeg', 0.9);
+        link.click();
+        downloadBtn.textContent = 'Saved!';
+        setTimeout(() => downloadBtn.textContent = 'Save Image', 2000);
+      } catch (err) {
+        showError('Failed to generate image');
+      } finally {
+        downloadBtn.disabled = false;
+      }
+    }
+
+    function resetForm() {
+      resultDiv.classList.remove('visible');
+      contentInput.value = '';
+      contentInput.focus();
+    }
+
+    function renderFromJson(scenes) {
+      let html = '';
+      for (const scene of scenes) {
+        html += `<div class="scene-heading">${scene.heading || ''}</div>`;
+        for (const line of scene.lines || []) {
+          if (line.type === 'action') html += `<div class="action">${line.text}</div>`;
+          else if (line.type === 'character') html += `<div class="character">${line.text}</div>`;
+          else if (line.type === 'dialogue') html += `<div class="dialogue">${line.text}</div>`;
+          else if (line.type === 'parenthetical') html += `<div class="parenthetical">${line.text}</div>`;
+        }
+      }
+      return html;
+    }
+
+    function showError(msg) {
+      errorDiv.textContent = msg;
+      errorDiv.classList.add('visible');
+    }
+
+    function hideError() {
+      errorDiv.classList.remove('visible');
+    }
+  </script>
+</body>
+</html>
