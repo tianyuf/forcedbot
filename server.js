@@ -11,6 +11,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Health check for Render
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 app.post('/api/chat', async (req, res) => {
   const { messages } = req.body;
 
