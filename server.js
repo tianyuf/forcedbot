@@ -109,7 +109,7 @@ If you cannot follow all rules exactly, output:
         'X-Title': 'I Forced A Bot'
       },
       body: JSON.stringify({
-        model: process.env.MODEL || 'anthropic/claude-opus-4.6',
+        model: process.env.MODEL || 'anthropic/claude-sonnet-4.6',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 4000,
         temperature: 0.9
