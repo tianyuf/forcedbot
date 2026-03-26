@@ -6,49 +6,262 @@
   <title>I Forced A Bot</title>
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --bg: #ffffff; --text: #111111; --text-light: #666666; --border: #dddddd; }
-    body { font-family: 'Courier New', Courier, monospace; background: var(--bg); color: var(--text); min-height: 100vh; padding: 2rem 1rem; }
-    .container { max-width: 600px; margin: 0 auto; }
-    .hidden { display: none; }
-    h1 { font-size: 1.5rem; text-align: center; margin-bottom: 0.5rem; font-weight: normal; }
-    .tagline { text-align: center; color: var(--text-light); font-size: 0.875rem; margin-bottom: 2rem; }
-    .input-row { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
-    .input-row label { background: #f5f5f5; padding: 0.875rem 1rem; border: 1px solid var(--border); border-right: none; font-size: 0.875rem; white-space: nowrap; }
-    input[type="text"] { flex: 1; padding: 0.875rem 1rem; border: 1px solid var(--border); font-family: inherit; font-size: 0.875rem; }
-    input[type="text"]:focus { outline: none; border-color: #333; }
-    button { width: 100%; padding: 1rem; background: #111; color: #fff; border: none; font-family: inherit; font-size: 0.875rem; cursor: pointer; }
-    button:hover { background: #333; }
-    button:disabled { background: #999; cursor: not-allowed; }
-    .error { margin-top: 1rem; padding: 0.75rem; background: #fff0f0; border: 1px solid #ffcccc; color: #cc0000; font-size: 0.75rem; display: none; }
+    :root {
+      --bg: #faf9f7;
+      --paper: #ffffff;
+      --text: #1a1a1a;
+      --text-light: #666666;
+      --border: #d4d4d4;
+      --accent: #ff3333;
+      --shadow: rgba(0,0,0,0.08);
+    }
+    body {
+      font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      line-height: 1.6;
+    }
+    .container { max-width: 680px; margin: 0 auto; }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 2.5rem; padding: 1rem 0; }
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+    .tagline {
+      color: var(--text-light);
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+
+    /* Input Section */
+    .input-section {
+      background: var(--paper);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .input-row {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1rem;
+      border: 2px solid var(--text);
+    }
+    .input-row label {
+      background: var(--text);
+      color: var(--paper);
+      padding: 1rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 1rem 1.25rem;
+      border: none;
+      font-family: inherit;
+      font-size: 1rem;
+      background: var(--paper);
+      outline: none;
+    }
+    input[type="text"]::placeholder { color: #999; }
+
+    button {
+      width: 100%;
+      padding: 1.1rem;
+      background: var(--accent);
+      color: var(--paper);
+      border: 2px solid var(--text);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    button:hover {
+      background: var(--text);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+    button:active { transform: translateY(0); }
+    button:disabled {
+      background: #ccc;
+      border-color: #999;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .error {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #ffeeee;
+      border-left: 4px solid var(--accent);
+      color: var(--accent);
+      font-size: 0.875rem;
+      font-weight: 700;
+      display: none;
+    }
     .error.visible { display: block; }
-    .result { margin-top: 2rem; display: none; border: 2px solid #111; }
+
+    /* Result - Play Script Format */
+    .result {
+      margin-top: 2rem;
+      display: none;
+      background: var(--paper);
+      border: 2px solid var(--text);
+      box-shadow: 0 4px 20px var(--shadow);
+    }
     .result.visible { display: block; }
-    .result-header { padding: 1rem; border-bottom: 1px solid var(--border); background: #fafafa; }
-    .result-header p { font-size: 0.875rem; line-height: 1.5; }
-    .result-body { padding: 1.5rem; font-size: 1.25rem; line-height: 1.4; white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; }
-    .result-body .scene-heading { font-weight: bold; text-transform: uppercase; margin: 1.5rem 0 0.5rem 0; }
-    .result-body .character { text-align: center !important; margin: 1rem 25% 0 25%; font-weight: bold !important; text-transform: uppercase; display: block; }
-    .result-body .parenthetical { text-align: center; margin: 0 30% 0 30%; font-style: italic; }
-    .result-body .dialogue { margin: 0.25rem 20% 0.5rem 20%; }
-    .result-body .action { margin: 0.5rem 0; }
-    .result-actions { display: flex; border-top: 1px solid var(--border); }
-    .result-actions button { width: auto; flex: 1; background: #fff; color: #111; border: none; border-right: 1px solid var(--border); padding: 0.75rem; font-size: 0.75rem; }
+
+    .result-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      background: #f5f5f5;
+    }
+    .result-header p {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: var(--text-light);
+      font-style: italic;
+    }
+
+    /* Script Body - Industry Standard Formatting */
+    .result-body {
+      padding: 2.5rem 3rem;
+      font-size: 1rem;
+      line-height: 1.6;
+      font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+      background: var(--paper);
+      min-height: 400px;
+    }
+
+    .result-body .scene-heading {
+      font-weight: bold;
+      text-transform: uppercase;
+      margin: 1.5rem 0 1rem 0;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+    .result-body .scene-heading:first-child {
+      margin-top: 0;
+    }
+
+    .result-body .action {
+      margin: 1rem 0;
+      text-align: left;
+    }
+
+    .result-body .character {
+      text-align: center;
+      margin: 1.5rem 0 0.25rem 0;
+      font-weight: bold;
+      text-transform: uppercase;
+      display: block;
+      font-size: 0.95rem;
+    }
+
+    .result-body .parenthetical {
+      text-align: center;
+      margin: 0 20%;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+
+    .result-body .dialogue {
+      margin: 0 15% 0.75rem 15%;
+      text-align: left;
+    }
+
+    /* Footer in output */
+    .result-footer {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-light);
+      font-style: italic;
+    }
+
+    /* Action Buttons */
+    .result-actions {
+      display: flex;
+      border-top: 2px solid var(--text);
+    }
+    .result-actions button {
+      width: auto;
+      flex: 1;
+      background: var(--paper);
+      color: var(--text);
+      border: none;
+      border-right: 1px solid var(--border);
+      padding: 1rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
     .result-actions button:last-child { border-right: none; }
-    .result-actions button:hover { background: #f5f5f5; }
+    .result-actions button:hover {
+      background: #f0f0f0;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* Page Footer */
+    .page-footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-light);
+    }
+    .page-footer a {
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-footer a:hover {
+      border-bottom-color: var(--text);
+    }
+
+    @media (max-width: 600px) {
+      .result-body { padding: 1.5rem 1.25rem; }
+      .result-body .dialogue { margin: 0 10% 0.75rem 10%; }
+      h1 { font-size: 1.75rem; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>I Forced A Bot</h1>
-    <p class="tagline">1000 hours of X → bot writes a script</p>
-
-    <div class="input-row">
-      <label>1000 hours of</label>
-      <input type="text" id="content" placeholder="Olive Garden commercials, 90s sitcoms...">
+    <div class="header">
+      <h1>I Forced A Bot</h1>
+      <p class="tagline">1000 hours of X → bot writes a script</p>
     </div>
 
-    <button id="generateBtn">Generate</button>
+    <div class="input-section">
+      <div class="input-row">
+        <label>1000 hours of</label>
+        <input type="text" id="content" placeholder="Olive Garden commercials, 90s sitcoms...">
+      </div>
+      <button id="generateBtn">Generate Script</button>
+    </div>
 
     <div class="error" id="error"></div>
 
@@ -57,11 +270,18 @@
         <p id="memeIntroText"></p>
       </div>
       <div class="result-body" id="playScript"></div>
-      <div class="result-actions">
-        <button id="copyBtn">Copy</button>
-        <button id="downloadBtn">Save Image</button>
-        <button id="newBtn">New</button>
+      <div class="result-footer" id="resultFooter">
+        Made by Tianyu Fang and inspired by Keaton Patti
       </div>
+      <div class="result-actions">
+        <button id="copyBtn">Copy Text</button>
+        <button id="downloadBtn">Save as Image</button>
+        <button id="newBtn">New Script</button>
+      </div>
+    </div>
+
+    <div class="page-footer">
+      <p>A homage to <a href="https://twitter.com/keatonpatti" target="_blank">Keaton Patti</a>'s "I forced a bot" meme format</p>
     </div>
   </div>
 
@@ -129,7 +349,7 @@
           playScript.innerHTML = `<div class="action">${lines.slice(1).join('<br>')}</div>`;
           resultDiv.classList.add('visible');
           generateBtn.disabled = false;
-          generateBtn.textContent = 'Generate';
+          generateBtn.textContent = 'Generate Script';
           return;
         }
 
@@ -141,15 +361,16 @@
         showError(err.message || 'Something went wrong');
       } finally {
         generateBtn.disabled = false;
-        generateBtn.textContent = 'Generate';
+        generateBtn.textContent = 'Generate Script';
       }
     }
 
     function copyToClipboard() {
-      const text = `${memeIntroText.textContent}\n\n${playScript.textContent}`;
+      const footerText = document.getElementById('resultFooter').textContent;
+      const text = `${memeIntroText.textContent}\n\n${playScript.textContent}\n\n${footerText}`;
       navigator.clipboard.writeText(text).then(() => {
         copyBtn.textContent = 'Copied!';
-        setTimeout(() => copyBtn.textContent = 'Copy', 2000);
+        setTimeout(() => copyBtn.textContent = 'Copy Text', 2000);
       });
     }
 
@@ -163,7 +384,7 @@
         link.href = canvas.toDataURL('image/jpeg', 0.9);
         link.click();
         downloadBtn.textContent = 'Saved!';
-        setTimeout(() => downloadBtn.textContent = 'Save Image', 2000);
+        setTimeout(() => downloadBtn.textContent = 'Save as Image', 2000);
       } catch (err) {
         showError('Failed to generate image');
       } finally {
