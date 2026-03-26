@@ -37,7 +37,7 @@ app.post('/api/chat', async (req, res) => {
       headers: {
         'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'http://localhost:3000',
+        'HTTP-Referer': 'https://forcedbot.onrender.com',
         'X-Title': 'I Forced A Bot'
       },
       body: JSON.stringify({
