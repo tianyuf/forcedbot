@@ -2,17 +2,31 @@ import express from 'express';
 import { config } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 config();
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Debug: Log directory contents
+console.log('__dirname:', __dirname);
+console.log('Public path:', path.join(__dirname, 'public'));
+console.log('Public exists:', fs.existsSync(path.join(__dirname, 'public')));
+if (fs.existsSync(path.join(__dirname, 'public'))) {
+  console.log('Public contents:', fs.readdirSync(path.join(__dirname, 'public')));
+}
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Health check for Render
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// Serve index.html at root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 app.post('/api/chat', async (req, res) => {
   const { messages } = req.body;
