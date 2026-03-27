@@ -42,11 +42,10 @@ The bot has watched 1,000 hours of ${content} (ONLY public video footage: interv
 Style:
 - Deadpan tone
 - Simple, literal misunderstandings
-- Slightly wrong wording and strange combinations
+- Include slightly wrong wording and strange combinations
 - Repetition of ideas that escalate
-- Confident but incorrect statements
+- Sometimes confident but incorrect statements
 - ALL CAPS character names
-- Short, punchy lines
 
 Mannerism focus (VERY IMPORTANT):
 - Strongly mimic visible and audible patterns from ${content}
@@ -69,8 +68,8 @@ Viral constraints:
 - Avoid generic jokes
 
 Length:
-- 150–250 words total
-- 2–3 scenes
+- 250-350 words total
+- 2-4 scenes
 
 Formatting rules:
 - Use straight quotes only (")
@@ -94,7 +93,7 @@ Output JSON:
 }
 
 Final requirement:
-- The LAST line must be the strongest joke or absurd punchline.
+- The LAST line must be the strongest joke or absurd punchline. Last line should be action. 
 
 If you cannot follow all rules exactly, output:
 {}`;
