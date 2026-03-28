@@ -347,7 +347,8 @@
       generateBtn.textContent = 'Watching...';
 
       try {
-        const response = await fetch('/api/generate', {
+        const API_URL = 'https://YOUR_VERCEL_APP.vercel.app/api/generate';
+        const response = await fetch(API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content })
