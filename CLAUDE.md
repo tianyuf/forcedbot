@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-"I Forced A Bot" - a web app that generates "I forced a bot to watch 1000 hours of X" memes in play script format. Users can input text or YouTube URLs, and the app generates humorous AI-written scripts.
+"I Forced A Bot" - a web app that generates "I forced a bot to watch 1000 hours of X" memes in play script format. Users input a topic and the app generates humorous AI-written scripts.
 
 ## Commands
 
@@ -17,12 +17,11 @@ The server runs at `http://localhost:3000` by default.
 
 ## Architecture
 
-- **server.js** - Express.js backend with two API endpoints:
-  - `POST /api/youtube/transcript` - Fetches transcripts from YouTube videos
-  - `POST /api/chat` - Proxies requests to OpenRouter AI API
+- **server.js** - Express.js backend with one API endpoint:
+  - `POST /api/generate` - Generates AI scripts via OpenRouter API
 
 - **public/index.html** - Frontend UI with:
-  - Text mode and YouTube mode (tabbed interface)
+  - Text input for topic
   - Generates JSON-formatted play scripts via AI
   - Renders scripts with screenplay formatting (scene headings, character names, dialogue)
   - Copy to clipboard and download as JPEG features
@@ -33,5 +32,6 @@ Environment variables in `.env`:
 - `OPENROUTER_API_KEY` - Required for AI generation
 - `MODEL` - AI model to use (default: x-ai/grok-4.1-fast)
 - `PORT` - Server port (default: 3000)
+- `SITE_URL` - Site URL for OpenRouter API referrer (default: https://forcedbot.onrender.com)
 
 Copy `.env.example` to `.env` and add your API key.

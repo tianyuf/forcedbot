@@ -11,9 +11,11 @@
       --bg: #ffffff;
       --paper: #ffffff;
       --text: #000000;
-      --text-light: #000000;
+      --text-light: #333333;
       --border: #000000;
       --accent: #000000;
+      --error-bg: #ffeeee;
+      --error-text: #cc0000;
     }
     body {
       font-family: 'Helvetica', 'Arial', sans-serif;
@@ -35,10 +37,9 @@
       text-transform: uppercase;
     }
     .tagline {
-      color: var(--text);
+      color: var(--text-light);
       font-size: 0.95rem;
       font-style: italic;
-      opacity: 0.7;
     }
 
     /* Input Section */
@@ -89,29 +90,43 @@
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    button:hover {
-      background: var(--text);
-      color: var(--paper);
-    }
-    button:active { transform: translateY(0); }
-    button:disabled {
+    button:hover:not(:disabled) {
       background: var(--paper);
-      color: var(--text-light);
-      border-color: var(--text);
+      color: var(--text);
+    }
+    button:active:not(:disabled) { transform: translateY(1px); }
+    button:disabled {
+      background: #cccccc;
+      color: #666666;
+      border-color: #666666;
       cursor: not-allowed;
     }
 
     .error {
       margin-top: 1rem;
       padding: 1rem;
-      background: #ffeeee;
-      border-left: 4px solid var(--accent);
-      color: var(--accent);
+      background: var(--error-bg);
+      border-left: 4px solid var(--error-text);
+      color: var(--error-text);
       font-size: 0.875rem;
-      font-weight: 700;
+      font-weight: 500;
       display: none;
     }
     .error.visible { display: block; }
+    .error .retry-btn {
+      margin-top: 0.75rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.8rem;
+      width: auto;
+      display: inline-block;
+      background: var(--error-text);
+      color: white;
+      border: none;
+    }
+    .error .retry-btn:hover:not(:disabled) {
+      background: #aa0000;
+      color: white;
+    }
 
     /* Result - Play Script Format */
     .result {
@@ -213,8 +228,8 @@
       letter-spacing: 0.5px;
     }
     .result-actions button:last-child { border-right: none; }
-    .result-actions button:hover {
-      background: var(--paper);
+    .result-actions button:hover:not(:disabled) {
+      background: #f0f0f0;
     }
 
     /* Page Footer */
@@ -235,10 +250,20 @@
       border-bottom-color: var(--text);
     }
 
+    /* Raw output styling for fallback */
+    .raw-output {
+      white-space: pre-wrap;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
     @media (max-width: 600px) {
       .result-body { padding: 1.5rem 1.25rem; }
       .result-body .dialogue { margin: 0 10% 0.75rem 10%; }
+      .result-body .parenthetical { margin: 0 10%; }
       h1 { font-size: 1.75rem; }
+      .result-actions button { font-size: 0.7rem; padding: 0.75rem 0.5rem; }
     }
   </style>
 </head>
@@ -252,7 +277,7 @@
     <div class="input-section">
       <div class="input-row">
         <label>1000 hours of</label>
-        <input type="text" id="content" placeholder="Olive Garden commercials, 90s sitcoms...">
+        <input type="text" id="content" placeholder="Olive Garden commercials, 90s sitcoms..." maxlength="500">
       </div>
       <button id="generateBtn">Start watching</button>
     </div>
@@ -265,7 +290,7 @@
       </div>
       <div class="result-body" id="playScript"></div>
       <div class="result-footer" id="resultFooter">
-        Inspired by Keaton Patti. 
+        Inspired by Keaton Patti.
       </div>
       <div class="result-actions">
         <button id="copyBtn">Copy Text</button>
@@ -290,18 +315,33 @@
     const playScript = document.getElementById('playScript');
     const errorDiv = document.getElementById('error');
 
-    generateBtn.addEventListener('click', generatePlay);
+    let lastContent = '';
+    let isGenerating = false;
+
+    generateBtn.addEventListener('click', () => {
+      if (isGenerating) return;
+      generatePlay(contentInput.value.trim());
+    });
     copyBtn.addEventListener('click', copyToClipboard);
     downloadBtn.addEventListener('click', downloadJPEG);
     newBtn.addEventListener('click', resetForm);
 
-    async function generatePlay() {
-      const content = contentInput.value.trim();
+    contentInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        generatePlay(contentInput.value.trim());
+      }
+    });
+
+    async function generatePlay(content) {
       if (!content) {
         showError('Enter what the bot watched');
         return;
       }
 
+      if (isGenerating) return;
+
+      lastContent = content;
+      isGenerating = true;
       hideError();
       generateBtn.disabled = true;
       generateBtn.textContent = 'Watching...';
@@ -315,7 +355,7 @@
 
         if (!response.ok) {
           const err = await response.json();
-          throw new Error(err.error?.message || 'API request failed');
+          throw new Error(err.error?.message || `API request failed (${response.status})`);
         }
 
         const data = await response.json();
@@ -325,46 +365,145 @@
           throw new Error('No response from AI');
         }
 
-        let json;
-        try {
-          const startIdx = result.indexOf('{');
-          const endIdx = result.lastIndexOf('}');
-          if (startIdx === -1 || endIdx === -1) throw new Error('No JSON found');
-          let jsonStr = result.substring(startIdx, endIdx + 1)
-            .replace(/[\u2018\u2019]/g, "'")  // Fix curly single quotes
-            .replace(/[\u201C\u201D]/g, '"');   // Fix curly double quotes
-          // Sanitize curly quotes that break JSON
-          jsonStr = jsonStr.replace(/[""]/g, '"').replace(/['']/g, "'");
-          json = JSON.parse(jsonStr);
-        } catch (e) {
-          // Fallback: display raw output
-          const lines = result.split('\n').filter(l => l.trim());
-          memeIntroText.textContent = lines[0] || '';
-          playScript.innerHTML = `<div class="action">${lines.slice(1).join('<br>')}</div>`;
-          resultDiv.classList.add('visible');
-          generateBtn.disabled = false;
-          generateBtn.textContent = 'Generate Script';
-          return;
+        const parsed = parseScriptResponse(result);
+
+        if (parsed.success) {
+          memeIntroText.textContent = parsed.intro || '';
+          playScript.innerHTML = parsed.html;
+        } else {
+          // Fallback: display raw output in a readable format
+          memeIntroText.textContent = '';
+          playScript.innerHTML = `<div class="raw-output">${escapeHtml(result)}</div>`;
         }
 
-        memeIntroText.textContent = json.intro || '';
-        playScript.innerHTML = renderFromJson(json.scenes || []);
         resultDiv.classList.add('visible');
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
       } catch (err) {
-        showError(err.message || 'Something went wrong');
+        showError(err.message || 'Something went wrong', true);
       } finally {
+        isGenerating = false;
         generateBtn.disabled = false;
-        generateBtn.textContent = 'Generate Script';
+        generateBtn.textContent = 'Start watching';
       }
+    }
+
+    function parseScriptResponse(text) {
+      // Try multiple strategies to extract JSON
+      const strategies = [
+        // Strategy 1: Code block with json
+        () => {
+          const jsonMatch = text.match(/```json\n?([\s\S]*?)\n?```/);
+          if (jsonMatch) return jsonMatch[1].trim();
+          return null;
+        },
+        // Strategy 2: Code block without language
+        () => {
+          const jsonMatch = text.match(/```\n?([\s\S]*?)\n?```/);
+          if (jsonMatch) return jsonMatch[1].trim();
+          return null;
+        },
+        // Strategy 3: Find JSON between first { and last }
+        () => {
+          const startIdx = text.indexOf('{');
+          const endIdx = text.lastIndexOf('}');
+          if (startIdx !== -1 && endIdx !== -1 && startIdx < endIdx) {
+            return text.substring(startIdx, endIdx + 1);
+          }
+          return null;
+        }
+      ];
+
+      for (const strategy of strategies) {
+        try {
+          const jsonStr = strategy();
+          if (!jsonStr) continue;
+
+          // Clean up common JSON issues
+          const cleaned = jsonStr
+            .replace(/[\u2018\u2019]/g, "'")   // curly single quotes
+            .replace(/[\u201C\u201D]/g, '"')   // curly double quotes
+            .replace(/[\u2013\u2014]/g, '-')  // em/en dashes
+            .replace(/,\s*}/g, '}')           // trailing commas
+            .replace(/,\s*]/g, ']')
+            .trim();
+
+          const json = JSON.parse(cleaned);
+
+          if (json.scenes && Array.isArray(json.scenes)) {
+            return {
+              success: true,
+              intro: json.intro || '',
+              html: renderFromJson(json.scenes)
+            };
+          }
+        } catch (e) {
+          // Continue to next strategy
+        }
+      }
+
+      return { success: false };
+    }
+
+    function renderFromJson(scenes) {
+      let html = '';
+      for (const scene of scenes) {
+        if (scene.heading) {
+          html += `<div class="scene-heading">${escapeHtml(scene.heading)}</div>`;
+        }
+        for (const line of scene.lines || []) {
+          if (!line || !line.type || !line.text) continue;
+          const text = escapeHtml(line.text);
+          if (line.type === 'action') html += `<div class="action">${text}</div>`;
+          else if (line.type === 'character') html += `<div class="character">${text}</div>`;
+          else if (line.type === 'dialogue') html += `<div class="dialogue">${text}</div>`;
+          else if (line.type === 'parenthetical') html += `<div class="parenthetical">${text}</div>`;
+        }
+      }
+      return html || '<div class="action">(No script content)</div>';
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     function copyToClipboard() {
       const footerText = document.getElementById('resultFooter').textContent;
-      const text = `${memeIntroText.textContent}\n\n${playScript.textContent}\n\n${footerText}`;
-      navigator.clipboard.writeText(text).then(() => {
+
+      // Build formatted text preserving screenplay structure
+      let scriptText = '';
+      const scenes = playScript.querySelectorAll('.scene-heading, .action, .character, .dialogue, .parenthetical');
+
+      for (const el of scenes) {
+        const text = el.textContent.trim();
+        if (!text) continue;
+
+        if (el.classList.contains('scene-heading')) {
+          scriptText += `${text.toUpperCase()}\n\n`;
+        } else if (el.classList.contains('action')) {
+          scriptText += `${text}\n\n`;
+        } else if (el.classList.contains('character')) {
+          scriptText += `           ${text.toUpperCase()}\n`;
+        } else if (el.classList.contains('parenthetical')) {
+          scriptText += `              (${text})\n`;
+        } else if (el.classList.contains('dialogue')) {
+          scriptText += `    ${text}\n\n`;
+        }
+      }
+
+      // Fallback to textContent if no structured elements found
+      const text = memeIntroText.textContent
+        ? `${memeIntroText.textContent}\n\n${scriptText || playScript.textContent}\n\n${footerText}`
+        : `${scriptText || playScript.textContent}\n\n${footerText}`;
+
+      navigator.clipboard.writeText(text.trim()).then(() => {
         copyBtn.textContent = 'Copied!';
         setTimeout(() => copyBtn.textContent = 'Copy Text', 2000);
+      }).catch(() => {
+        showError('Failed to copy to clipboard');
       });
     }
 
@@ -372,15 +511,25 @@
       downloadBtn.disabled = true;
       downloadBtn.textContent = 'Saving...';
       try {
-        const canvas = await html2canvas(resultDiv, { backgroundColor: '#ffffff', scale: 2 });
+        // Set fixed dimensions for consistent output
+        const canvas = await html2canvas(resultDiv, {
+          backgroundColor: '#ffffff',
+          scale: 2,
+          width: resultDiv.offsetWidth,
+          height: resultDiv.offsetHeight,
+          useCORS: true,
+          allowTaint: true
+        });
         const link = document.createElement('a');
-        link.download = 'bot-meme.jpg';
-        link.href = canvas.toDataURL('image/jpeg', 0.9);
+        const timestamp = new Date().toISOString().slice(0, 10);
+        link.download = `forced-bot-${timestamp}.jpg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.95);
         link.click();
         downloadBtn.textContent = 'Saved!';
         setTimeout(() => downloadBtn.textContent = 'Save as Image', 2000);
       } catch (err) {
         showError('Failed to generate image');
+        console.error('Image generation error:', err);
       } finally {
         downloadBtn.disabled = false;
       }
@@ -388,32 +537,32 @@
 
     function resetForm() {
       resultDiv.classList.remove('visible');
-      contentInput.value = '';
+      hideError();
+      // Don't clear input - user might want to regenerate
       contentInput.focus();
     }
 
-    function renderFromJson(scenes) {
-      let html = '';
-      for (const scene of scenes) {
-        html += `<div class="scene-heading">${scene.heading || ''}</div>`;
-        for (const line of scene.lines || []) {
-          if (line.type === 'action') html += `<div class="action">${line.text}</div>`;
-          else if (line.type === 'character') html += `<div class="character">${line.text}</div>`;
-          else if (line.type === 'dialogue') html += `<div class="dialogue">${line.text}</div>`;
-          else if (line.type === 'parenthetical') html += `<div class="parenthetical">${line.text}</div>`;
-        }
+    function showError(msg, showRetry = false) {
+      let html = escapeHtml(msg);
+      if (showRetry && lastContent) {
+        html += `<br><button class="retry-btn" onclick="retryGenerate()">Try Again</button>`;
       }
-      return html;
-    }
-
-    function showError(msg) {
-      errorDiv.textContent = msg;
+      errorDiv.innerHTML = html;
       errorDiv.classList.add('visible');
     }
 
     function hideError() {
       errorDiv.classList.remove('visible');
+      errorDiv.textContent = '';
     }
+
+    // Global function for inline onclick
+    window.retryGenerate = function() {
+      if (lastContent) {
+        hideError();
+        generatePlay(lastContent);
+      }
+    };
   </script>
 </body>
 </html>

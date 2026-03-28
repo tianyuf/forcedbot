@@ -3,12 +3,11 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "dotenv": "^16.4.0",
     "express": "^4.21.0",
-    "youtube-transcript": "^1.1.0"
+    "express-rate-limit": "^7.5.0"
   }
 }
